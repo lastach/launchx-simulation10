@@ -47,9 +47,10 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --purple-main: #6C4BEF;
-    --purple-light: #EDE9FE;
-    --purple-dark: #4C1D95;
+    --brand-primary: #EA6534;
+    --brand-light: #FEF0EB;
+    --brand-dark: #446276;
+    --brand-hover: #F87B4D;
     --gold-accent: #D97706;
     --gold-light: #FEF3C7;
     --green-accent: #10B981;
@@ -69,7 +70,7 @@ st.markdown("""
 }
 
 .game-header {
-    background: linear-gradient(135deg, #6C4BEF 0%, #7C3AED 40%, #D97706 100%);
+    background: linear-gradient(135deg, #446276 0%, #5A7D8F 40%, #EA6534 100%);
     color: white;
     padding: 2rem 2.5rem;
     border-radius: 16px;
@@ -91,7 +92,7 @@ st.markdown("""
 
 .quarter-badge {
     display: inline-block;
-    background: var(--purple-main);
+    background: var(--brand-primary);
     color: white;
     padding: 0.35rem 1.1rem;
     border-radius: 20px;
@@ -133,13 +134,13 @@ st.markdown("""
 }
 
 .offer-card:hover {
-    border-color: var(--purple-main);
-    box-shadow: 0 4px 12px rgba(108, 75, 239, 0.12);
+    border-color: var(--brand-primary);
+    box-shadow: 0 4px 12px rgba(234, 101, 52, 0.12);
 }
 
 .offer-card h3 {
     margin: 0 0 0.5rem 0;
-    color: var(--purple-dark);
+    color: var(--brand-dark);
     font-size: 1.15rem;
 }
 
@@ -155,7 +156,7 @@ st.markdown("""
 .tag-financial { background: var(--green-light); color: #065F46; }
 .tag-team { background: var(--blue-light); color: #1E40AF; }
 .tag-impact { background: var(--gold-light); color: #92400E; }
-.tag-personal { background: var(--purple-light); color: var(--purple-dark); }
+.tag-personal { background: var(--brand-light); color: var(--brand-dark); }
 
 .event-card {
     background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
@@ -176,8 +177,8 @@ st.markdown("""
 }
 
 .insight-box {
-    background: var(--purple-light);
-    border-left: 4px solid var(--purple-main);
+    background: var(--brand-light);
+    border-left: 4px solid var(--brand-primary);
     border-radius: 0 12px 12px 0;
     padding: 1rem 1.2rem;
     margin: 1rem 0;
@@ -198,7 +199,7 @@ st.markdown("""
 }
 
 .founder-type-card {
-    background: linear-gradient(135deg, #6C4BEF 0%, #D97706 100%);
+    background: linear-gradient(135deg, #446276 0%, #EA6534 100%);
     color: white;
     padding: 2rem;
     border-radius: 16px;
@@ -234,7 +235,7 @@ st.markdown("""
 
 .journal-entry {
     background: white;
-    border-left: 3px solid var(--purple-main);
+    border-left: 3px solid var(--brand-primary);
     padding: 0.8rem 1rem;
     margin: 0.5rem 0;
     border-radius: 0 8px 8px 0;
@@ -245,6 +246,19 @@ st.markdown("""
     border-radius: 8px;
     font-weight: 600;
     padding: 0.5rem 1.5rem;
+    background-color: #EA6534 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.stButton > button:hover {
+    background-color: #F87B4D !important;
+    color: white !important;
+}
+
+.stButton > button:active, .stButton > button:focus {
+    background-color: #D4572C !important;
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -863,13 +877,15 @@ def apply_metric_changes(changes: Dict[str, Any]):
 
 def get_letter_grade(score: int, max_score: int) -> str:
     pct = score / max_score if max_score > 0 else 0
-    if pct >= 0.85:
+    # Grading is curved because no single path can maximize all dimensions.
+    # Achieving ~60% of the theoretical max reflects strong, thoughtful play.
+    if pct >= 0.65:
         return "A"
-    elif pct >= 0.70:
+    elif pct >= 0.50:
         return "B"
-    elif pct >= 0.55:
+    elif pct >= 0.35:
         return "C"
-    elif pct >= 0.40:
+    elif pct >= 0.20:
         return "D"
     else:
         return "F"
@@ -911,7 +927,7 @@ def determine_archetype() -> str:
     return "The Balanced Navigator"
 
 
-def render_progress_bar(value: int, max_val: int, color: str = "#6C4BEF"):
+def render_progress_bar(value: int, max_val: int, color: str = "#EA6534"):
     pct = min(100, max(0, int((value / max_val) * 100))) if max_val > 0 else 0
     st.markdown(f"""
     <div class="progress-bar-container">
@@ -1037,7 +1053,7 @@ def render_play():
     dots = ""
     for i in range(5):
         if i < q_idx:
-            dots += '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#6C4BEF;margin:0 4px;"></span>'
+            dots += '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#EA6534;margin:0 4px;"></span>'
         elif i == q_idx:
             dots += '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#D97706;margin:0 4px;border:2px solid #92400E;"></span>'
         else:
@@ -1157,7 +1173,7 @@ def render_narrative():
             ("Financial Return", "financial", "#10B981"),
             ("Team Legacy", "team", "#3B82F6"),
             ("Market Impact", "impact", "#D97706"),
-            ("Personal Fulfillment", "personal", "#6C4BEF"),
+            ("Personal Fulfillment", "personal", "#EA6534"),
         ]
         for col, (label, key, color) in zip(cols, dims):
             with col:
@@ -1261,7 +1277,7 @@ def render_results():
         ("Financial Return", "financial", "#10B981"),
         ("Team Legacy", "team", "#3B82F6"),
         ("Market Impact", "impact", "#D97706"),
-        ("Personal Fulfillment", "personal", "#6C4BEF"),
+        ("Personal Fulfillment", "personal", "#EA6534"),
     ]
 
     cols = st.columns(4)
@@ -1349,14 +1365,14 @@ def render_results():
 
     # CTA
     st.markdown("""
-    <div style="text-align:center;padding:2rem;background:linear-gradient(135deg, #EDE9FE 0%, #FEF3C7 100%);border-radius:16px;">
-        <h3 style="margin:0 0 0.5rem 0;color:#4C1D95;">Ready to Build for Real?</h3>
+    <div style="text-align:center;padding:2rem;background:linear-gradient(135deg, #FEF0EB 0%, #FEF3C7 100%);border-radius:16px;">
+        <h3 style="margin:0 0 0.5rem 0;color:#446276;">Ready to Build for Real?</h3>
         <p style="color:#6B7280;margin:0 0 1rem 0;">
             LaunchX helps young entrepreneurs go from idea to launch with mentors,
             curriculum, and a community of builders.
         </p>
         <a href="https://launchx.com" target="_blank"
-           style="display:inline-block;background:#6C4BEF;color:white;padding:0.7rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">
+           style="display:inline-block;background:#EA6534;color:white;padding:0.7rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">
             Explore LaunchX Programs
         </a>
     </div>
