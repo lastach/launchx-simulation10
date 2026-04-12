@@ -1,6 +1,6 @@
 """
-Simulation #10: Exit Pathways & Legacy
-LaunchX Entrepreneurship Simulation Suite
+Exit Pathways & Legacy
+Entrepreneurship Simulation
 
 The capstone simulation. You have been building ThermaLoop for 3 years.
 The company is real, growing, and generating revenue. Now the biggest
@@ -24,7 +24,7 @@ import streamlit as st
 # Page setup
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="LaunchX: Exit Pathways & Legacy",
+    page_title="Exit Pathways & Legacy",
     page_icon="trophy",
     layout="wide",
 )
@@ -1368,12 +1368,12 @@ def render_results():
     <div style="text-align:center;padding:2rem;background:linear-gradient(135deg, #FEF0EB 0%, #FEF3C7 100%);border-radius:16px;">
         <h3 style="margin:0 0 0.5rem 0;color:#446276;">Ready to Build for Real?</h3>
         <p style="color:#6B7280;margin:0 0 1rem 0;">
-            LaunchX helps young entrepreneurs go from idea to launch with mentors,
+            This simulation helps young entrepreneurs go from idea to launch with mentors,
             curriculum, and a community of builders.
         </p>
-        <a href="https://launchx.com" target="_blank"
+        <a href="#" target="_blank"
            style="display:inline-block;background:#EA6534;color:white;padding:0.7rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">
-            Explore LaunchX Programs
+            Explore More Simulations
         </a>
     </div>
     """, unsafe_allow_html=True)
@@ -1383,7 +1383,7 @@ def render_results():
     # Footer
     st.markdown("""
     <div style="text-align:center;padding:2rem 0 1rem 0;color:#9CA3AF;font-size:0.8rem;">
-        Brought to you by LaunchX | Simulation #10: Exit Pathways & Legacy
+         | Exit Pathways & Legacy
     </div>
     """, unsafe_allow_html=True)
 
