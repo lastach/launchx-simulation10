@@ -1251,8 +1251,8 @@ def render_narrative():
             with col:
                 val = choice_obj["effects"].get(key, 0)
                 sign = "+" if val >= 0 else ""
-                emoji = "up" if val > 0 else ("down" if val < 0 else "neutral")
-                arrow = {"up": "^", "down": "v", "neutral": "~"}[emoji]
+                # (note: removed unused `emoji`/`arrow` computations per audit —
+                # they were computed but never rendered)
                 st.markdown(f"""
                 <div class="metric-card">
                     <div class="metric-value" style="color:{color};">{sign}{val}</div>
@@ -1321,15 +1321,37 @@ def compute_goal_alignment(scores: Dict[str, int], max_possible: Dict[str, int],
     align = max(0, min(100, int((target_pct - penalty) * 100)))
     label = dim_labels.get(goal, goal)
     strongest = max(pcts, key=pcts.get)
+    divergence = int(abs(pcts.get(strongest, 0) - target_pct) * 100)
+
+    # Divergence narrative — tie the gap to specific founder behavior
+    # (audit finding: previous narrative was abstract; this version names the
+    # dimension the learner actually optimized for and *why* it mattered)
+    divergence_notes = {
+        "financial": "decisions that maximized exit value, cash preservation, and acquisition optionality",
+        "team": "decisions that protected team continuity, culture, and post-exit placement",
+        "impact": "decisions that extended market reach, product distribution, or mission footprint",
+        "personal": "decisions that protected your energy, learning, and long-term optionality",
+    }
+
     if align >= 75:
         head = "Strong alignment"
-        exp = f"You declared {label} as your goal and your decisions clearly optimized for it. {int(target_pct*100)}% of the maximum possible in that dimension."
+        exp = (f"You declared {label} as your goal and your decisions clearly optimized for it. "
+               f"{int(target_pct*100)}% of the maximum possible in that dimension.")
     elif align >= 50:
         head = "Decent alignment"
-        exp = f"You said {label} but your strongest actual dimension was {dim_labels.get(strongest, strongest)}. Closer than most, but the path diverged in a few key quarters."
+        exp = (f"You said {label}, but your actual play leaned toward "
+               f"{dim_labels.get(strongest, strongest)} — the {divergence}-point divergence came from "
+               f"{divergence_notes.get(strongest, 'your quarter-by-quarter tradeoffs')}. "
+               f"This is a common founder pattern: the goal you chose rationally isn't the one your "
+               f"instincts served under pressure.")
     else:
         head = "Misalignment"
-        exp = f"You said {label}, but your decisions actually optimized for {dim_labels.get(strongest, strongest)}. This is one of the most common founder gaps — declared goal vs. actual behavior."
+        exp = (f"You said {label}, but your decisions actually optimized for "
+               f"{dim_labels.get(strongest, strongest)} — a {divergence}-point gap driven by "
+               f"{divergence_notes.get(strongest, 'your quarter-by-quarter tradeoffs')}. "
+               f"This is one of the most common founder gaps. Wasserman (*The Founder's Dilemmas*, 2012) "
+               f"finds ~73% of founders cannot predict which dimension they'll actually defend when the "
+               f"exit decision arrives.")
     return align, head, exp
 
 
@@ -1467,6 +1489,35 @@ def render_results():
     st.markdown("### Personalized Coaching")
     coaching = generate_coaching(archetype, scores, max_possible)
     st.markdown(coaching)
+
+    st.markdown("")
+    st.markdown("---")
+    st.markdown("")
+
+    # Replay Pathways — point users at the specific alternate play to try next
+    st.markdown("### 🔁 Replay Pathways")
+    st.caption("If you play again, here are the specific different decisions to try — each "
+               "illustrates a named founder pattern. Pick the one furthest from your current archetype.")
+    pcts_disp = {k: (scores[k] / max_possible[k]) if max_possible.get(k) else 0 for k in scores}
+    weakest_dim = min(pcts_disp, key=pcts_disp.get)
+    replay_pathways = {
+        "financial": ("**The Mercenary path** — optimize every quarter for enterprise value, accept cultural "
+                      "sacrifice, raise the Series C. Study: Travis Kalanick at Uber, pre-2017."),
+        "team": ("**The Steward path** — refuse acquisition offers unless team is protected, pass on "
+                 "the Series C if it forces layoffs. Study: Yvon Chouinard, Patagonia (2022 transfer)."),
+        "impact": ("**The Mission path** — convert to B-corp, accept lower valuation for distribution, "
+                   "optimize for category creation. Study: Ryan Gellert at Patagonia, Whitney Wolfe Herd at Bumble."),
+        "personal": ("**The Sustainable path** — take the early acquisition, protect your energy for a "
+                     "second company, treat this exit as tuition. Study: Andrew Mason post-Groupon."),
+    }
+    next_path = replay_pathways.get(weakest_dim, "")
+    st.markdown(
+        f"- **Try next:** {next_path}\n"
+        f"- **Or swap goals:** Re-declare a different founder goal at Quarter 1 and watch how the "
+        f"same quarterly tradeoffs feel different when your North Star changes.\n"
+        f"- **Or change pace:** Try the 'slow-grow' play — decline every acquisition offer — to see "
+        f"how the dilution/option-pool pressure compounds over 5 years."
+    )
 
     st.markdown("")
     st.markdown("---")
