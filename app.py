@@ -773,7 +773,7 @@ EXIT_ARCHETYPES = {
             "build something you are proud of. The best deals come from companies "
             "that were not built to be sold."
         ),
-        "real_world": "Brian Chesky explored multiple acquisition offers before taking Airbnb public. Reid Hoffman sold LinkedIn to Microsoft for $26B at exactly the right moment.",
+        "real_world": "This archetype wins when timing meets liquidity. The skill is reading the deal curve — knowing when the strategic premium is at its peak and when it's about to compress. Many of the highest-return exits in the last decade came from founders who could hold *and* let go at the right moment.",
     },
     "The Empire Builder": {
         "description": (
@@ -788,7 +788,7 @@ EXIT_ARCHETYPES = {
             "is serving the mission, not the other way around. The graveyard of "
             "startups is full of founders who could not take 'yes' for an answer."
         ),
-        "real_world": "Elon Musk repeatedly rejected acquisition offers for Tesla. Sara Blakely held Spanx for 20+ years before selling a majority stake at a $1.2B valuation.",
+        "real_world": "This archetype turns down offers that would make a reasonable person wealthy, in pursuit of category dominance. The math works *only* if the company compounds at a rate that exceeds the risk-adjusted value of the declined offers. Most don't. The ones that do define decades.",
     },
     "The Craftsperson": {
         "description": (
@@ -803,7 +803,7 @@ EXIT_ARCHETYPES = {
             "about growth. Make sure you are choosing this path because it fits "
             "your values, not because it feels safe."
         ),
-        "real_world": "Jason Fried built Basecamp (now 37signals) into a profitable, calm company without ever raising a traditional round. Mailchimp operated profitably for 20 years before selling to Intuit for $12B.",
+        "real_world": "This archetype optimizes for margin, retention, and autonomy — not growth rate. The tradeoff: you give up the venture-scale outcome in exchange for decision control and durability. Done well, these companies compound at low multiples for decades and sell at a strategic premium when they're ready.",
     },
     "The Serial Founder": {
         "description": (
@@ -818,7 +818,7 @@ EXIT_ARCHETYPES = {
             "parts of building. The founders who change the world usually do it by "
             "staying, not by starting over."
         ),
-        "real_world": "Jack Dorsey co-founded Twitter, then went on to build Square (now Block). Ev Williams started Blogger, sold to Google, then founded Twitter, then started Medium.",
+        "real_world": "This archetype accumulates founder-years across multiple ventures. The edge is pattern recognition — you're faster at recognizing what won't work than founders on their first company. The cost is opportunity: every exit forfeits the compounding you *would* have earned by staying.",
     },
     "The Balanced Navigator": {
         "description": (
@@ -833,7 +833,7 @@ EXIT_ARCHETYPES = {
             "points, founders need to commit fully to one direction. Make sure your "
             "balance is a strength, not a way of avoiding commitment."
         ),
-        "real_world": "Whitney Wolfe Herd balanced personal mission, team building, and financial outcomes to take Bumble public. Stewart Butterfield pivoted from a game to Slack, balancing vision with practical opportunity.",
+        "real_world": "This archetype refuses the false choice between mission and money, or team and growth. The skill is weighing four dimensions simultaneously under time pressure. The risk is over-weighting whichever is most salient in the moment — which is why the best navigators pre-commit to decision rules before the tradeoff arrives.",
     },
 }
 
@@ -1349,9 +1349,9 @@ def compute_goal_alignment(scores: Dict[str, int], max_possible: Dict[str, int],
         exp = (f"You said {label}, but your decisions actually optimized for "
                f"{dim_labels.get(strongest, strongest)} — a {divergence}-point gap driven by "
                f"{divergence_notes.get(strongest, 'your quarter-by-quarter tradeoffs')}. "
-               f"This is one of the most common founder gaps. Wasserman (*The Founder's Dilemmas*, 2012) "
-               f"finds ~73% of founders cannot predict which dimension they'll actually defend when the "
-               f"exit decision arrives.")
+               f"This is one of the most common founder gaps: most founders cannot accurately "
+               f"predict which dimension they'll actually defend when the exit decision arrives. "
+               f"The stated goal is often the *aspiration*; the revealed goal is what survives pressure.")
     return align, head, exp
 
 
@@ -1496,19 +1496,25 @@ def render_results():
 
     # Replay Pathways — point users at the specific alternate play to try next
     st.markdown("### 🔁 Replay Pathways")
-    st.caption("If you play again, here are the specific different decisions to try — each "
-               "illustrates a named founder pattern. Pick the one furthest from your current archetype.")
+    st.caption("If you play again, here are the specific different decisions to try. "
+               "Pick the one furthest from your current archetype.")
     pcts_disp = {k: (scores[k] / max_possible[k]) if max_possible.get(k) else 0 for k in scores}
     weakest_dim = min(pcts_disp, key=pcts_disp.get)
     replay_pathways = {
-        "financial": ("**The Mercenary path** — optimize every quarter for enterprise value, accept cultural "
-                      "sacrifice, raise the Series C. Study: Travis Kalanick at Uber, pre-2017."),
+        "financial": ("**The Mercenary path** — optimize every quarter for enterprise value, accept "
+                      "cultural sacrifice, raise the Series C. You'll see burn compound and "
+                      "retention fracture; the question is whether the liquidation preference math "
+                      "makes it worth it."),
         "team": ("**The Steward path** — refuse acquisition offers unless team is protected, pass on "
-                 "the Series C if it forces layoffs. Study: Yvon Chouinard, Patagonia (2022 transfer)."),
+                 "the Series C if it forces layoffs. Watch the option-pool dilution and cap-table "
+                 "dynamics that follow when you prioritize team over growth capital."),
         "impact": ("**The Mission path** — convert to B-corp, accept lower valuation for distribution, "
-                   "optimize for category creation. Study: Ryan Gellert at Patagonia, Whitney Wolfe Herd at Bumble."),
-        "personal": ("**The Sustainable path** — take the early acquisition, protect your energy for a "
-                     "second company, treat this exit as tuition. Study: Andrew Mason post-Groupon."),
+                   "optimize for category creation. You'll see how mission-lock changes the "
+                   "acquirer pool and the multiples you can command."),
+        "personal": ("**The Sustainable path** — take the early acquisition, protect your energy for "
+                     "a second company, treat this exit as tuition. See how early-exit math (lower "
+                     "absolute value, faster liquidity, lower opportunity cost) compares to the "
+                     "long-hold path."),
     }
     next_path = replay_pathways.get(weakest_dim, "")
     st.markdown(
