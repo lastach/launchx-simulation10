@@ -852,6 +852,9 @@ def init_state():
         "company": dict(COMPANY_BASELINE),
         "email_captured": False,
         "user_email": "",
+        # Goal-based scoring: founder declares their primary goal upfront
+        # so we can evaluate alignment between intent and actual choices.
+        "founder_goal": None,  # one of: financial, team, impact, personal, balanced
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -1024,9 +1027,80 @@ def render_intro():
     st.markdown("")
 
     if st.button("Begin Your Endgame", type="primary", use_container_width=True):
-        st.session_state.stage = "play"
+        st.session_state.stage = "set_goal"
         st.session_state.quarter = 0
         st.rerun()
+
+
+# ---------------------------------------------------------------------------
+# Stage: Set Goal (declared before play; used for alignment scoring)
+# ---------------------------------------------------------------------------
+GOAL_OPTIONS = [
+    {
+        "key": "financial",
+        "label": "Maximize Financial Return",
+        "icon": "💰",
+        "desc": "You want to walk away with the biggest possible payout for yourself, your team, and your investors. The win is liquidity and personal wealth.",
+    },
+    {
+        "key": "team",
+        "label": "Build Lasting Team Legacy",
+        "icon": "🤝",
+        "desc": "You want every person who built this with you to thrive — financially, professionally, and personally. The win is a team that calls this the best chapter of their careers.",
+    },
+    {
+        "key": "impact",
+        "label": "Maximize Market Impact",
+        "icon": "🌍",
+        "desc": "You want ThermaLoop to leave a permanent mark on the industry — better products, better standards, real climate impact at scale. The win is changing how things are done.",
+    },
+    {
+        "key": "personal",
+        "label": "Personal Fulfillment",
+        "icon": "🧭",
+        "desc": "You want this journey to give you what you actually wanted — autonomy, learning, time with family, the freedom to keep building. The win is finishing this without losing yourself.",
+    },
+    {
+        "key": "balanced",
+        "label": "Balanced Across All Four",
+        "icon": "⚖️",
+        "desc": "You want a respectable outcome across all four dimensions — no single thing dominates. The win is no major regrets in any direction.",
+    },
+]
+
+
+def render_set_goal():
+    st.markdown("""
+    <div class="game-header">
+        <h1>What's Your Goal?</h1>
+        <p>Before you start: what does success actually look like for you?</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("")
+    st.markdown(
+        "Most founders never name their goal explicitly, then spend years frustrated "
+        "that the outcome doesn't match what they secretly wanted. Pick one now. "
+        "We'll measure how well your actual decisions align with this stated goal."
+    )
+    st.markdown("")
+
+    # Render each goal as a card with a select button
+    for goal in GOAL_OPTIONS:
+        with st.container():
+            st.markdown(f"""
+            <div class="metric-card" style="text-align:left;padding:1.2rem;margin-bottom:0.6rem;">
+                <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
+                    <span style="font-size:1.6rem;">{goal['icon']}</span>
+                    <span style="font-size:1.05rem;font-weight:700;color:#1F2937;">{goal['label']}</span>
+                </div>
+                <div style="color:#4B5563;font-size:0.92rem;">{goal['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Choose: {goal['label']}", key=f"goal_{goal['key']}", use_container_width=True):
+                st.session_state.founder_goal = goal["key"]
+                st.session_state.stage = "play"
+                st.rerun()
 
 
 # ---------------------------------------------------------------------------
@@ -1035,7 +1109,7 @@ def render_intro():
 def render_play():
     q_idx = st.session_state.quarter
     if q_idx >= len(QUARTERS):
-        st.session_state.stage = "email_gate"
+        st.session_state.stage = "results"
         st.rerun()
         return
 
@@ -1200,7 +1274,7 @@ def render_narrative():
     if st.button(btn_label, type="primary", use_container_width=True):
         st.session_state.quarter += 1
         if st.session_state.quarter >= len(QUARTERS):
-            st.session_state.stage = "email_gate"
+            st.session_state.stage = "results"
         else:
             st.session_state.stage = "play"
         st.rerun()
@@ -1243,10 +1317,63 @@ def render_email_gate():
 # ---------------------------------------------------------------------------
 # Stage: Results
 # ---------------------------------------------------------------------------
+def compute_goal_alignment(scores: Dict[str, int], max_possible: Dict[str, int], goal: str) -> Tuple[int, str, str]:
+    """Return (alignment_pct, headline, explanation) comparing actual play to declared goal.
+
+    For single-dimension goals: alignment = how much of that dimension's max the player
+    achieved, with a small penalty when other dimensions dominate.
+    For 'balanced': alignment rewards a tight spread across all four dimensions.
+    """
+    dim_labels = {
+        "financial": "Financial Return",
+        "team": "Team Legacy",
+        "impact": "Market Impact",
+        "personal": "Personal Fulfillment",
+    }
+    pcts = {k: (scores[k] / max_possible[k]) if max_possible.get(k) else 0 for k in scores}
+
+    if goal == "balanced":
+        # Lower spread = stronger alignment with a balanced goal
+        spread = max(pcts.values()) - min(pcts.values())
+        avg = sum(pcts.values()) / len(pcts)
+        # Reward both balance (low spread) and absolute strength (high avg)
+        align = max(0, min(100, int((avg * 70) + ((1 - spread) * 30))))
+        if align >= 75:
+            head = "Strong alignment"
+            exp = "You wanted balance and you delivered it. Your scores are tight across all four dimensions and the average is solid."
+        elif align >= 50:
+            head = "Decent alignment"
+            exp = f"You aimed for balance but the spread between your strongest and weakest dimension is wider than the goal implied ({int(spread*100)} pts)."
+        else:
+            head = "Weak alignment"
+            exp = "You said balanced, but you played one dimension much harder than others. That's a useful self-insight."
+        return align, head, exp
+
+    # Single-dimension goals
+    target_pct = pcts.get(goal, 0)
+    other_max = max([pcts[k] for k in pcts if k != goal] or [0])
+    # Alignment = how much of the goal dimension was achieved minus a penalty if another dim dominated
+    penalty = max(0, other_max - target_pct) * 0.4
+    align = max(0, min(100, int((target_pct - penalty) * 100)))
+    label = dim_labels.get(goal, goal)
+    strongest = max(pcts, key=pcts.get)
+    if align >= 75:
+        head = "Strong alignment"
+        exp = f"You declared {label} as your goal and your decisions clearly optimized for it. {int(target_pct*100)}% of the maximum possible in that dimension."
+    elif align >= 50:
+        head = "Decent alignment"
+        exp = f"You said {label} but your strongest actual dimension was {dim_labels.get(strongest, strongest)}. Closer than most, but the path diverged in a few key quarters."
+    else:
+        head = "Misalignment"
+        exp = f"You said {label}, but your decisions actually optimized for {dim_labels.get(strongest, strongest)}. This is one of the most common founder gaps — declared goal vs. actual behavior."
+    return align, head, exp
+
+
 def render_results():
     archetype = determine_archetype()
     arch_data = EXIT_ARCHETYPES[archetype]
     scores = st.session_state.scores
+    founder_goal = st.session_state.get("founder_goal") or "balanced"
 
     # Calculate max possible scores
     max_possible = {"financial": 0, "team": 0, "impact": 0, "personal": 0}
@@ -1257,6 +1384,24 @@ def render_results():
 
     total_score = sum(scores.values())
     total_max = sum(max_possible.values())
+
+    # Goal alignment block — show this BEFORE the archetype so users see intent vs reality first
+    goal_label_map = {g["key"]: g["label"] for g in GOAL_OPTIONS}
+    align_pct, align_head, align_exp = compute_goal_alignment(scores, max_possible, founder_goal)
+    align_color = "#10B981" if align_pct >= 75 else "#D97706" if align_pct >= 50 else "#EF4444"
+    st.markdown(f"""
+    <div style="background:#F9FAFB;border-left:5px solid {align_color};border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1.2rem;">
+        <div style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;color:#6B7280;margin-bottom:0.3rem;">Goal Alignment</div>
+        <div style="display:flex;align-items:baseline;gap:0.8rem;">
+            <span style="font-size:2rem;font-weight:800;color:{align_color};">{align_pct}%</span>
+            <span style="font-size:1rem;font-weight:600;color:#1F2937;">{align_head}</span>
+        </div>
+        <div style="margin-top:0.6rem;color:#4B5563;font-size:0.92rem;">
+            <strong>Your declared goal:</strong> {goal_label_map.get(founder_goal, founder_goal)}<br>
+            {align_exp}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="founder-type-card">
@@ -1513,11 +1658,19 @@ stage = st.session_state.stage
 
 if stage == "intro":
     render_intro()
+elif stage == "set_goal":
+    render_set_goal()
 elif stage == "play":
+    # Defensive: if a returning user lands on play without a goal, send to set_goal first
+    if not st.session_state.get("founder_goal"):
+        st.session_state.stage = "set_goal"
+        st.rerun()
     render_play()
 elif stage == "narrative":
     render_narrative()
 elif stage == "email_gate":
-    render_email_gate()
+    # Email gate removed; route directly to results
+    st.session_state.stage = "results"
+    st.rerun()
 elif stage == "results":
     render_results()
