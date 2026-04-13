@@ -850,8 +850,6 @@ def init_state():
         "scores": {"financial": 0, "team": 0, "impact": 0, "personal": 0},
         "journal": [],
         "company": dict(COMPANY_BASELINE),
-        "email_captured": False,
-        "user_email": "",
         # Goal-based scoring: founder declares their primary goal upfront
         # so we can evaluate alignment between intent and actual choices.
         "founder_goal": None,  # one of: financial, team, impact, personal, balanced
@@ -1278,40 +1276,6 @@ def render_narrative():
         else:
             st.session_state.stage = "play"
         st.rerun()
-
-
-# ---------------------------------------------------------------------------
-# Stage: Email Gate
-# ---------------------------------------------------------------------------
-def render_email_gate():
-    st.markdown("""
-    <div class="game-header">
-        <h1>Your Founder Journey is Complete</h1>
-        <p>Enter your email to unlock your full Exit Profile and personalized coaching</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("")
-    st.markdown(
-        "You just navigated five quarters of high-stakes decisions. Your choices "
-        "reveal a distinct founder profile with unique strengths, blind spots, "
-        "and real-world parallels. Enter your email below to see your full results."
-    )
-
-    st.markdown("")
-
-    email = st.text_input("Email address", key="email_input", placeholder="you@example.com")
-
-    st.markdown("")
-
-    if st.button("Unlock My Results", type="primary", use_container_width=True):
-        if email and "@" in email and "." in email:
-            st.session_state.user_email = email
-            st.session_state.email_captured = True
-            st.session_state.stage = "results"
-            st.rerun()
-        else:
-            st.error("Please enter a valid email address.")
 
 
 # ---------------------------------------------------------------------------
